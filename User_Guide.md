@@ -8,5 +8,9 @@ Do the needede configuration like setting a Password and user.<br>
 After completing those steps you can install our application using the command: <br>
 sudo wget -O - https://jati.kubenet.lu/download/script | bash <br>
 
+## Terraform
+
+## Shellcodes
+
 
 
