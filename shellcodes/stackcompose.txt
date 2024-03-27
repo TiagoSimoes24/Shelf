@@ -1,0 +1,37 @@
+#!/bin/bash
+
+sudo docker image pull jameyjj/jati-backend:latest
+sudo docker image pull jameyjj/jati-frontend:latest
+sudo docker image pull jameyjj/jati-olama:latest
+sudo docker image pull jameyjj/jati-rmbg:latest
+
+cat > docker-compose.yml << 'EOL'
+version: '3.7'
+
+services:
+  jati-frontend:
+    image: jameyjj/jati-frontend
+    deploy:
+      replicas: 4
+
+
+  jati-backend:
+    image: jameyjj/jati-backend
+    deploy:
+      replicas: 6
+
+  jati-rmbg:
+    image: jameyjj/jati-rmbg
+    deploy:
+      placement:
+        constraints: [node.labels.performance == high]
+
+  jati-olama:
+    image: jameyjj/jati-olama
+    deploy:
+      placement:
+        constraints: [node.labels.performance == high]
+EOL
+
+sudo docker stack deploy -c docker-compose.yml  jati-services
+sudo docker run -it -d -p 1000:8080 -v /var/run/docker.sock:/var/run/docker.sock dockersamples/visualizer

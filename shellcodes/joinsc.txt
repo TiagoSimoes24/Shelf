@@ -1,0 +1,32 @@
+#!/bin/bash
+
+#Configure AWS
+aws configure set aws_access_key_id AKIAVRUVUKIP3YFQVNJK
+aws configure set aws_secret_access_key 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
+aws configure set region eu-central-1
+aws configure set output json
+
+echo "AWS Configuration completed successfully."
+
+sudo apt-get install -y sshpass
+# Get private IP address of EC2 instance with tag Name=master-instance
+master_private_ip=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=master-instance" --query 'Reservations[*].Instances[*].PrivateIpAddress' --output text)
+
+# Output private IP address of worker instance
+echo "Private IP address of Master"
+echo "$master_private_ip"
+
+# Path to the file containing the Swarm token
+TOKEN_FILE="swarm_token.txt"
+
+# Read the token from the file
+TOKEN=$(cat "$TOKEN_FILE")
+
+# Join the Docker Swarm
+sudo docker swarm join --token $TOKEN $master_private_ip
+sudo docker login -u jagja870 -p ncd7E8toNBSbwSTSqMLz
+
+sudo docker image pull jameyjj/jati-backend:latest
+sudo docker image pull jameyjj/jati-frontend:latest
+sudo docker image pull jameyjj/jati-olama:latest
+sudo docker image pull jameyjj/jati-rmbg:latest

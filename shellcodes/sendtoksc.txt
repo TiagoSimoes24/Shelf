@@ -1,0 +1,50 @@
+#!/bin/bash
+# Function to install AWS CLI
+install_aws_cli() {
+    echo "AWS CLI is not installed. Installing..."
+    sudo apt-get update
+    sudo apt-get install -y awscli sshpass
+    echo "AWS CLI installed successfully."
+}
+
+# Check if AWS CLI is installed
+if ! command -v aws &> /dev/null; then
+    install_aws_cli
+fi
+
+echo "AWS Configuration Setup"
+
+aws configure set aws_access_key_id AKIAVRUVUKIP3YFQVNJK
+aws configure set aws_secret_access_key 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
+aws configure set region eu-central-1
+aws configure set output json
+
+echo "AWS Configuration completed successfully."
+
+sudo apt-get install sshpass
+# Get private IP address of EC2 instance with tag Name=master-instance
+worker_private_ip=$(aws ec2 describe-instances --filters "Name=tag:Name,Values=worker-instance" --query 'Reservations[*].Instances[*].PrivateIpAddress' --output text)
+
+# Output private IP address of worker instance
+echo "Private IP address of EC2 instance with tag Name=worker-instance:"
+echo "$worker_private_ip"
+
+# Generate Swarm token on the master instance
+swarm_token=$(sudo docker swarm join-token -q worker)
+
+# Create a temporary file to store the swarm token
+temp_file="swarm_token.txt"
+echo "$swarm_token" > "/home/ubuntu/$temp_file"
+ssh-keygen -t rsa -b 4096 -f key.pem -N ""
+
+# Send the swarm token file to the worker instance using AWS Systems Manager Session Manager
+sshpass -p 'test..123' scp -i key.pem $temp_file ubuntu@$worker_private_ip:~
+
+echo "File send"
+# Output message
+echo "Swarm token generated and sent to worker instance."
+
+sudo docker node update --label-add performance=high leader
+sudo docker node update --label-add performance=low worker
+
+sudo docker login -u jagja870 -p ncd7E8toNBSbwSTSqMLz
